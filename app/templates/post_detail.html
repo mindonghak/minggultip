@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+  <article class="card">
+    <h1>{{ post.title }}</h1>
+    <p class="muted">카테고리: {{ post.category.name }} · 작성자: {{ post.author.email }}</p>
+    <div class="content">{{ post.content | e | replace("\n","<br>") | safe }}</div>
+
+    <hr />
+    <p class="muted">좋아요: {{ post.likes|length }} (버튼/토글은 다음 단계에서 붙이면 됨)</p>
+  </article>
+{% endblock %}

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+<head>
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<title>Minggultip</title>
+
+<link rel="stylesheet" href="/static/style.css" />
+
+</head>
+
+<body>
+
+<header class="header">
+
+<a class="logo" href="/">Minggultip</a>
+
+<nav>
+
+{% if user %}
+
+<span class="muted">{{ user.email }}</span>
+
+<a href="/posts/new">글쓰기</a>
+
+<form action="/logout" method="post" class="inline">
+
+<button type="submit">로그아웃</button>
+
+</form>
+
+{% else %}
+
+<a href="/login">로그인</a>
+
+<a href="/register">회원가입</a>
+
+{% endif %}
+
+</nav>
+
+</header>
+
+<main class="container">
+
+{% block content %}{% endblock %}
+
+</main>
+
+<footer class="footer muted">
+
+Minggultip MVP
+
+</footer>
+
+</body>
+</html>

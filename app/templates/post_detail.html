@@ -1,11 +1,68 @@
 {% extends "base.html" %}
 {% block content %}
-  <article class="card">
-    <h1>{{ post.title }}</h1>
-    <p class="muted">카테고리: {{ post.category.name }} · 작성자: {{ post.author.email }}</p>
+  {% include "_discover.html" %}
+
+  <article class="detail-panel">
+    <div class="section-title">
+      <div>
+        <span class="tag">{{ post.category.name }}</span>
+        <h1>{{ post.title }}</h1>
+        <p class="muted">작성자 {{ post.author.nickname or post.author.email }}</p>
+      </div>
+      {% if user and user.is_admin %}
+        <form action="/admin/posts/{{ post.id }}/delete" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          <button type="submit" class="danger">삭제</button>
+        </form>
+      {% endif %}
+    </div>
+
     <div class="content">{{ post.content | e | replace("\n","<br>") | safe }}</div>
 
-    <hr />
-    <p class="muted">좋아요: {{ post.likes|length }} (버튼/토글은 다음 단계에서 붙이면 됨)</p>
+    <div class="actions">
+      <span class="metric">좋아요 {{ post.likes|length }}</span>
+      <span class="metric">댓글 {{ comments|length }}</span>
+      {% if user %}
+        <form action="/posts/{{ post.id }}/like" method="post" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          <button type="submit">{{ "좋아요 취소" if user_liked else "좋아요" }}</button>
+        </form>
+      {% else %}
+        <a href="/login">로그인하고 좋아요</a>
+      {% endif %}
+    </div>
   </article>
+
+  <section class="comment-panel">
+    <h2>댓글 {{ comments|length }}</h2>
+    {% if user %}
+      <form method="post" action="/posts/{{ post.id }}/comments" class="comment-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+        <textarea name="content" rows="4" required placeholder="댓글을 입력하세요"></textarea>
+        <button type="submit">댓글 작성</button>
+      </form>
+    {% else %}
+      <p class="comment-login muted"><a href="/login">로그인</a>하면 댓글을 작성할 수 있습니다.</p>
+    {% endif %}
+
+    <ul class="comment-list">
+      {% for comment in comments %}
+        <li>
+          <p>{{ comment.content }}</p>
+          <div class="comment-meta">
+            <span>{{ comment.user.nickname or comment.user.email }}</span>
+            {% if user and user.is_admin %}
+              <form action="/admin/comments/{{ comment.id }}/delete" method="post" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+                <button type="submit" class="link-button danger-text">삭제</button>
+              </form>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+      {% if comments|length == 0 %}
+        <li class="empty-state">아직 댓글이 없습니다.</li>
+      {% endif %}
+    </ul>
+  </section>
 {% endblock %}

@@ -1,0 +1,18 @@
+<section class="discover-bar">
+  <div class="discover-search">
+    <p class="discover-line">오늘 바로 써먹을 수 있는 꿀팁을 모아보세요.</p>
+    <form class="search-form" method="get" action="/">
+      <input name="q" value="{{ q or '' }}" placeholder="제목, 내용, 카테고리 검색" />
+      <button type="submit">검색</button>
+    </form>
+  </div>
+
+  <div class="tags">
+    {% for c in categories %}
+      <a class="tag" href="/?q={{ c.name }}">{{ c.name }}</a>
+    {% endfor %}
+    {% if q %}
+      <a class="tag clear-tag" href="/">전체</a>
+    {% endif %}
+  </div>
+</section>

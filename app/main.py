@@ -1,14 +1,14 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from .db import engine, Base
+from .db import init_db
 from .routes import router
 
 app = FastAPI(title="Minggultip")
 
 @app.on_event("startup")
 def on_startup():
-    Base.metadata.create_all(bind=engine)
+    init_db()
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 

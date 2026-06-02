@@ -1,32 +1,53 @@
 {% extends "base.html" %}
-{% block content %}
-  <h1>꿀팁 게시판</h1>
-
-  <section class="card">
-    <h3>카테고리</h3>
-    <div class="tags">
-      {% for c in categories %}
-        <span class="tag">{{ c.name }}</span>
-      {% endfor %}
-      {% if categories|length == 0 %}
-        <span class="muted">아직 카테고리가 없습니다. 글을 작성하면 자동 생성됩니다.</span>
-      {% endif %}
+{% macro post_item(p) %}
+  <li class="post-row">
+    <a class="post-title" href="/posts/{{ p.id }}">{{ p.title }}</a>
+    <p>{{ p.content[:78] }}{% if p.content|length > 78 %}...{% endif %}</p>
+    <div class="post-meta">
+      <span>{{ p.category.name }}</span>
+      <span>좋아요 {{ p.likes|length }}</span>
+      <span>댓글 {{ p.comments|length }}</span>
+      <span>{{ p.author.nickname or p.author.email }}</span>
     </div>
-  </section>
+  </li>
+{% endmacro %}
 
-  <section class="card">
-    <h3>최근 글</h3>
-    <ul class="list">
-      {% for p in posts %}
-        <li>
-          <a href="/posts/{{ p.id }}">{{ p.title }}</a>
-          <span class="muted">· {{ p.category.name }}</span>
-          <span class="muted">· 좋아요 {{ p.likes|length }}</span>
-        </li>
-      {% endfor %}
-      {% if posts|length == 0 %}
-        <li class="muted">첫 글을 작성해보세요.</li>
-      {% endif %}
-    </ul>
+{% block content %}
+  {% include "_discover.html" %}
+
+  {% if q %}
+    <p class="result-note">"{{ q }}" 검색 결과</p>
+  {% endif %}
+
+  <section class="feed-grid">
+    <div class="feed" id="recent">
+      <div class="section-title">
+        <h2>최신글</h2>
+        <span class="muted">{{ recent_posts|length }}개</span>
+      </div>
+      <ul class="post-list">
+        {% for p in recent_posts %}
+          {{ post_item(p) }}
+        {% endfor %}
+        {% if recent_posts|length == 0 %}
+          <li class="empty-state">표시할 최신글이 없습니다.</li>
+        {% endif %}
+      </ul>
+    </div>
+
+    <div class="feed" id="popular">
+      <div class="section-title">
+        <h2>인기글</h2>
+        <span class="muted">{{ popular_posts|length }}개</span>
+      </div>
+      <ul class="post-list">
+        {% for p in popular_posts %}
+          {{ post_item(p) }}
+        {% endfor %}
+        {% if popular_posts|length == 0 %}
+          <li class="empty-state">표시할 인기글이 없습니다.</li>
+        {% endif %}
+      </ul>
+    </div>
   </section>
 {% endblock %}

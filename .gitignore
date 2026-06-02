@@ -1,5 +1,7 @@
 .venv/
+.venv-run/
 __pycache__/
 *.pyc
 app.db
 .env
+uvicorn.*.log

@@ -39,6 +39,14 @@ def naver_site_verification():
     )
 
 
+@app.get("/googlea9dfad43021b3c8a.html", include_in_schema=False)
+def google_site_verification():
+    return Response(
+        content="google-site-verification: googlea9dfad43021b3c8a.html",
+        media_type="text/html",
+    )
+
+
 @app.get("/sitemap.xml", include_in_schema=False)
 def sitemap_xml():
     urls = [f"""

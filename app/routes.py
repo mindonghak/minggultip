@@ -128,6 +128,9 @@ def render(request: Request, template_name: str, context: dict):
     if user and "csrf_token" not in context:
         context["csrf_token"] = create_csrf_token(user.id)
     context["request"] = request
+    context.setdefault("canonical_url", str(request.url).split("?")[0])
+    context.setdefault("page_title", "민꿀팁")
+    context.setdefault("page_description", "오늘 바로 써먹을 수 있는 생활 꿀팁과 정보를 나누는 커뮤니티입니다.")
     return templates.TemplateResponse(template_name, context)
 
 
@@ -352,6 +355,8 @@ def index(
         "recent_has_next": recent_has_next,
         "popular_has_next": popular_has_next,
         "q": query,
+        "page_title": "민꿀팁 - 생활 꿀팁 공유 커뮤니티",
+        "page_description": "절약, 정리, 교통, 생활 정보까지 오늘 바로 써먹을 수 있는 꿀팁을 모아보세요.",
         **categories_and_tags(db),
     })
 
@@ -664,6 +669,8 @@ def post_detail(request: Request, post_id: int, db: Session = Depends(get_db)):
         "can_manage": can_manage_post(user, post),
         "temporary_like_threshold": TEMP_POST_LIKE_THRESHOLD,
         "temporary_dislike_threshold": TEMP_POST_DISLIKE_THRESHOLD,
+        "page_title": f"{post.title} - 민꿀팁",
+        "page_description": post.content.replace("\n", " ")[:140],
         **categories_and_tags(db),
     })
 

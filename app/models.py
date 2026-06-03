@@ -44,6 +44,7 @@ class Post(Base):
     content: Mapped[str] = mapped_column(Text)
     view_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     status: Mapped[str] = mapped_column(String(20), default="published", server_default="published")
+    source: Mapped[str] = mapped_column(String(20), default="user", server_default="user")
     anonymous_author_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
     promotion_deadline: Mapped[str | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

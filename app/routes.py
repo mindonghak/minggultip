@@ -545,12 +545,14 @@ def new_post(
         author_id = user.id
         anonymous_author_name = None
         status = "published"
+        source = "user"
         promotion_deadline = None
     else:
         anonymous_writer = get_anonymous_writer(db)
         author_id = anonymous_writer.id
         anonymous_author_name = random_anonymous_name()
         status = "temporary"
+        source = "anonymous"
         promotion_deadline = temporary_deadline()
 
     post = Post(
@@ -560,6 +562,7 @@ def new_post(
         category_id=cat.id,
         anonymous_author_name=anonymous_author_name,
         status=status,
+        source=source,
         promotion_deadline=promotion_deadline,
     )
     db.add(post)

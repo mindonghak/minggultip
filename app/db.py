@@ -48,6 +48,7 @@ def init_db():
     post_required_columns = {
         "view_count": "INTEGER DEFAULT 0",
         "status": "VARCHAR(20) DEFAULT 'published'",
+        "source": "VARCHAR(20) DEFAULT 'user'",
         "anonymous_author_name": "VARCHAR(50)",
         "promotion_deadline": "DATETIME",
     }

@@ -34,7 +34,13 @@
       {% endif %}
     </header>
 
-    <div class="content">{{ post.content | e | replace("\n","<br>") | safe }}</div>
+    <div class="content article-content">
+      {% for paragraph in post.content.split("\n\n") %}
+        {% if paragraph.strip() %}
+          <p>{{ paragraph.strip().replace("\n", " ") }}</p>
+        {% endif %}
+      {% endfor %}
+    </div>
 
     <div class="actions article-actions">
       <form action="/posts/{{ post.id }}/like" method="post" class="inline">

@@ -1,5 +1,6 @@
 import os
 from datetime import timezone
+from xml.sax.saxutils import escape as escape_xml
 
 from fastapi import FastAPI
 from fastapi.responses import Response
@@ -66,6 +67,44 @@ def sitemap_xml():
 </urlset>
 """
     return Response(content=body, media_type="application/xml")
+
+
+@app.get("/rss.xml", include_in_schema=False)
+def rss_xml():
+    with SessionLocal() as db:
+        posts = db.execute(
+            select(Post).where(Post.status == "published").order_by(Post.created_at.desc()).limit(30)
+        ).scalars().all()
+
+    items = []
+    for post in posts:
+        pub_date = ""
+        if post.created_at:
+            created_at = post.created_at
+            if getattr(created_at, "tzinfo", None):
+                created_at = created_at.astimezone(timezone.utc).replace(tzinfo=None)
+            pub_date = created_at.strftime("%a, %d %b %Y %H:%M:%S +0000")
+        description = post.content.replace("\n", " ")[:300]
+        items.append(f"""
+    <item>
+      <title>{escape_xml(post.title)}</title>
+      <link>{SITE_URL}/posts/{post.id}</link>
+      <guid>{SITE_URL}/posts/{post.id}</guid>
+      <description>{escape_xml(description)}</description>
+      <pubDate>{pub_date}</pubDate>
+    </item>""")
+
+    body = f"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>민꿀팁</title>
+    <link>{SITE_URL}/</link>
+    <description>오늘 바로 써먹을 수 있는 생활 꿀팁과 정보를 나누는 커뮤니티입니다.</description>
+    <language>ko</language>{''.join(items)}
+  </channel>
+</rss>
+"""
+    return Response(content=body, media_type="application/rss+xml")
 
 
 @app.on_event("startup")

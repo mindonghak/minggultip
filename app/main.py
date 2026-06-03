@@ -30,6 +30,14 @@ def robots_txt():
     return Response(content=body, media_type="text/plain")
 
 
+@app.get("/naverba4b1be3b5ac79d896842060a6b17504.html", include_in_schema=False)
+def naver_site_verification():
+    return Response(
+        content="naver-site-verification: naverba4b1be3b5ac79d896842060a6b17504.html",
+        media_type="text/html",
+    )
+
+
 @app.get("/sitemap.xml", include_in_schema=False)
 def sitemap_xml():
     urls = [f"""

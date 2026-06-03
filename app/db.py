@@ -33,15 +33,16 @@ def init_db():
         return
 
     user_columns = {column["name"] for column in inspector.get_columns("users")}
+    boolean_default = "BOOLEAN DEFAULT 0" if engine.dialect.name == "sqlite" else "BOOLEAN DEFAULT false"
     user_required_columns = {
         "username": "VARCHAR(50)",
         "nickname": "VARCHAR(50)",
         "recovery_email": "VARCHAR(255)",
-        "email_verified": "BOOLEAN DEFAULT 0",
+        "email_verified": boolean_default,
         "profile_image": "VARCHAR(500)",
         "bio": "TEXT",
-        "is_admin": "BOOLEAN DEFAULT 0",
-        "is_suspended": "BOOLEAN DEFAULT 0",
+        "is_admin": boolean_default,
+        "is_suspended": boolean_default,
     }
     post_columns = {column["name"] for column in inspector.get_columns("posts")} if "posts" in inspector.get_table_names() else set()
     post_required_columns = {

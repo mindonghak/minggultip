@@ -6,6 +6,11 @@ from .routes import router
 
 app = FastAPI(title="Minggultip")
 
+
+@app.get("/healthz")
+def healthz():
+    return {"status": "ok", "app": "minggultip"}
+
 @app.on_event("startup")
 def on_startup():
     init_db()

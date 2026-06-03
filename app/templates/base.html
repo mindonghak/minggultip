@@ -3,17 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Minggultip</title>
+  <title>민꿀팁</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
   <header class="header">
+    <div class="header-spacer" aria-hidden="true"></div>
     <a class="logo" href="/">
       <span class="logo-mark">M</span>
-      <span>Minggultip</span>
+      <span>민꿀팁</span>
     </a>
     <nav>
       {% if user %}
+        <a href="/me">마이페이지</a>
+        {% if user.is_admin %}
+          <a href="/admin/reports">신고함</a>
+          <a href="/admin/inquiries">문의함</a>
+        {% endif %}
         <span class="user-chip">{{ user.nickname or user.email }}</span>
         <a class="primary-link" href="/posts/new">글쓰기</a>
         <form action="/logout" method="post" class="inline">
@@ -21,8 +27,8 @@
           <button type="submit" class="link-button">로그아웃</button>
         </form>
       {% else %}
-        <a href="/login">로그인</a>
-        <a class="primary-link" href="/register">회원가입</a>
+        <a class="primary-link" href="/posts/new">글쓰기</a>
+        <a class="login-link" href="/login">로그인</a>
       {% endif %}
     </nav>
   </header>
@@ -32,7 +38,8 @@
   </main>
 
   <footer class="footer muted">
-    Minggultip MVP
+    <span>민꿀팁 · 꿀팁 공유 커뮤니티</span>
+    <a href="/inquiries/new">문의하기</a>
   </footer>
 </body>
 </html>

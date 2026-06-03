@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+  {% include "_discover.html" %}
+
+  <section class="profile-panel">
+    <h1>{{ user.nickname or user.email }}</h1>
+    <p class="muted">{{ user.bio or "아직 소개가 없습니다." }}</p>
+  </section>
+
+  <section class="feed-grid">
+    <div class="feed">
+      <div class="section-title"><h2>작성한 글</h2></div>
+      <ul class="post-list">
+        {% for p in posts %}
+          <li class="post-row">
+            <a class="post-title" href="/posts/{{ p.id }}">{{ p.title }}</a>
+            <div class="post-meta"><span>{{ p.created_at|datetime }}</span></div>
+          </li>
+        {% endfor %}
+        {% if posts|length == 0 %}<li class="empty-state">작성한 글이 없습니다.</li>{% endif %}
+      </ul>
+    </div>
+
+    <div class="feed">
+      <div class="section-title"><h2>저장한 글</h2></div>
+      <ul class="post-list">
+        {% for b in bookmarks %}
+          <li class="post-row">
+            <a class="post-title" href="/posts/{{ b.post.id }}">{{ b.post.title }}</a>
+            <div class="post-meta"><span>{{ b.created_at|datetime }}</span></div>
+          </li>
+        {% endfor %}
+        {% if bookmarks|length == 0 %}<li class="empty-state">저장한 글이 없습니다.</li>{% endif %}
+      </ul>
+    </div>
+
+    <div class="feed">
+      <div class="section-title"><h2>좋아요한 글</h2></div>
+      <ul class="post-list">
+        {% for like in likes %}
+          <li class="post-row">
+            <a class="post-title" href="/posts/{{ like.post.id }}">{{ like.post.title }}</a>
+            <div class="post-meta"><span>{{ like.created_at|datetime }}</span></div>
+          </li>
+        {% endfor %}
+        {% if likes|length == 0 %}<li class="empty-state">좋아요한 글이 없습니다.</li>{% endif %}
+      </ul>
+    </div>
+
+    <div class="feed">
+      <div class="section-title"><h2>작성한 댓글</h2></div>
+      <ul class="comment-list">
+        {% for comment in comments %}
+          <li>
+            <a href="/posts/{{ comment.post_id }}">{{ comment.post.title }}</a>
+            <p>{{ comment.content }}</p>
+            <div class="comment-meta"><span>{{ comment.created_at|datetime }}</span></div>
+          </li>
+        {% endfor %}
+        {% if comments|length == 0 %}<li class="empty-state">작성한 댓글이 없습니다.</li>{% endif %}
+      </ul>
+    </div>
+
+    <div class="feed full-span" id="inquiries">
+      <div class="section-title">
+        <h2>내 문의</h2>
+        <a class="primary-link" href="/inquiries/new">문의하기</a>
+      </div>
+      <ul class="comment-list">
+        {% for inquiry in inquiries %}
+          <li>
+            <div class="inquiry-head">
+              <strong>{{ inquiry.subject }}</strong>
+              <span class="status-badge status-{{ inquiry.status }}">{{ inquiry.status }}</span>
+            </div>
+            <p>{{ inquiry.message }}</p>
+            <div class="post-meta">
+              <span>{{ inquiry.created_at|datetime }}</span>
+              <span>{{ inquiry.updated_at|datetime }}</span>
+            </div>
+            {% if inquiry.admin_note %}
+              <div class="admin-note">
+                <strong>운영자 답변</strong>
+                <p>{{ inquiry.admin_note }}</p>
+              </div>
+            {% endif %}
+          </li>
+        {% endfor %}
+        {% if inquiries|length == 0 %}<li class="empty-state">남긴 문의가 없습니다.</li>{% endif %}
+      </ul>
+    </div>
+  </section>
+{% endblock %}

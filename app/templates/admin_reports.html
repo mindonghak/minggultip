@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+  {% include "_discover.html" %}
+
+  <section class="feed">
+    <div class="section-title">
+      <h1>신고함</h1>
+      <span class="muted">{{ reports|length }}건</span>
+    </div>
+    <ul class="comment-list">
+      {% for report in reports %}
+        <li>
+          <p>{{ report.reason }}</p>
+          <div class="post-meta">
+            <span>{{ report.status }}</span>
+            <span>{{ report.created_at|datetime }}</span>
+            <span>{{ report.user.nickname or report.user.email }}</span>
+            {% if report.post_id %}<a href="/posts/{{ report.post_id }}">게시글 보기</a>{% endif %}
+          </div>
+          {% if report.status == "open" %}
+            <form action="/admin/reports/{{ report.id }}/resolve" method="post" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+              <button type="submit" class="secondary-button">처리 완료</button>
+            </form>
+          {% endif %}
+        </li>
+      {% endfor %}
+      {% if reports|length == 0 %}
+        <li class="empty-state">신고가 없습니다.</li>
+      {% endif %}
+    </ul>
+  </section>
+{% endblock %}

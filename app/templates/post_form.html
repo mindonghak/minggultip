@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+  {% include "_discover.html" %}
+
+  <section class="form-panel">
+    <h1>{{ "글 수정" if post else "글쓰기" }}</h1>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+    {% if is_anonymous_post %}
+      <div class="notice-box">
+        <strong>로그인하지 않고 작성하면 임시 게시글로 등록됩니다.</strong>
+        <p>
+          작성자는 임의의 닉네임으로 표시됩니다. 등록 후 {{ temporary_review_days }}일 안에 좋아요
+          {{ temporary_like_threshold }}개 이상을 받으면 정식 게시글로 전환되고, 기준을 채우지 못하면 삭제됩니다.
+          기간과 무관하게 싫어요 {{ temporary_dislike_threshold }}개 이상을 받으면 즉시 삭제됩니다.
+        </p>
+      </div>
+    {% endif %}
+
+    <form method="post" action="{{ action }}">
+      {% if user %}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+      {% endif %}
+      <label>제목</label>
+      <input name="title" value="{{ post.title if post else '' }}" required />
+      <label>태그</label>
+      <input name="tags" value="{{ tag_text }}" placeholder="예: 절약 청소 자취" />
+      <label>내용</label>
+      <textarea name="content" rows="12" required>{{ post.content if post else '' }}</textarea>
+      <div class="form-actions">
+        <button type="submit">{{ submit_label }}</button>
+        <a href="{{ '/posts/' ~ post.id if post else '/' }}">취소</a>
+      </div>
+    </form>
+  </section>
+{% endblock %}

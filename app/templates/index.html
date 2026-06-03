@@ -1,15 +1,44 @@
 {% extends "base.html" %}
 {% macro post_item(p) %}
+  {% set grade = p|reaction_grade %}
   <li class="post-row">
-    <a class="post-title" href="/posts/{{ p.id }}">{{ p.title }}</a>
-    <p>{{ p.content[:78] }}{% if p.content|length > 78 %}...{% endif %}</p>
+    <a class="post-summary" href="/posts/{{ p.id }}">
+      <span class="post-title">{{ p.title }}</span>
+      <span class="badge-row">
+        <span class="status-badge reaction-badge {{ grade.class }}">{{ grade.label }}</span>
+        {% if p.status == "temporary" %}
+          <span class="status-badge status-temporary">임시글</span>
+        {% endif %}
+      </span>
+      <span class="post-excerpt">{{ p.content }}</span>
+    </a>
+    <div class="tags compact-tags">
+      {% for tag in p.tags %}
+        <a class="tag" href="/?q={{ tag.name }}">#{{ tag.name }}</a>
+      {% endfor %}
+    </div>
     <div class="post-meta">
-      <span>{{ p.category.name }}</span>
-      <span>좋아요 {{ p.likes|length }}</span>
-      <span>댓글 {{ p.comments|length }}</span>
-      <span>{{ p.author.nickname or p.author.email }}</span>
+      <span>{{ p.created_at|datetime }}</span>
+      <span>조회 {{ p.view_count }}</span>
+      <span>좋아요 {{ p|total_likes }}</span>
+      <span>싫어요 {{ p|total_dislikes }}</span>
+      <span>저장 {{ p.bookmarks|length }}</span>
+      <span><a class="meta-link" href="/posts/{{ p.id }}#comments">댓글 {{ p.comments|length }}</a></span>
+      <span>{{ p|display_author }}</span>
     </div>
   </li>
+{% endmacro %}
+
+{% macro pager(kind, page, has_next) %}
+  <div class="pager">
+    {% if page > 1 %}
+      <a href="/?q={{ q }}&{{ kind }}_page={{ page - 1 }}">이전</a>
+    {% endif %}
+    <span>{{ page }}페이지</span>
+    {% if has_next %}
+      <a href="/?q={{ q }}&{{ kind }}_page={{ page + 1 }}">다음</a>
+    {% endif %}
+  </div>
 {% endmacro %}
 
 {% block content %}
@@ -33,6 +62,7 @@
           <li class="empty-state">표시할 최신글이 없습니다.</li>
         {% endif %}
       </ul>
+      {{ pager("recent", recent_page, recent_has_next) }}
     </div>
 
     <div class="feed" id="popular">
@@ -48,6 +78,7 @@
           <li class="empty-state">표시할 인기글이 없습니다.</li>
         {% endif %}
       </ul>
+      {{ pager("popular", popular_page, popular_has_next) }}
     </div>
   </section>
 {% endblock %}

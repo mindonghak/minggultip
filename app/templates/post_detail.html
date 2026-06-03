@@ -1,40 +1,81 @@
 {% extends "base.html" %}
 {% block content %}
-  {% include "_discover.html" %}
+  <div class="detail-discover">
+    {% include "_discover.html" %}
+  </div>
+  {% set grade = post|reaction_grade %}
 
-  <article class="detail-panel">
-    <div class="section-title">
-      <div>
-        <span class="tag">{{ post.category.name }}</span>
-        <h1>{{ post.title }}</h1>
-        <p class="muted">작성자 {{ post.author.nickname or post.author.email }}</p>
+  <article class="detail-panel article-main">
+    <header class="article-head">
+      <div class="badge-row">
+        <span class="status-badge reaction-badge {{ grade.class }}">{{ grade.label }}</span>
+        {% if post.status == "temporary" %}
+          <span class="status-badge status-temporary">임시글</span>
+        {% endif %}
       </div>
-      {% if user and user.is_admin %}
-        <form action="/admin/posts/{{ post.id }}/delete" method="post">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-          <button type="submit" class="danger">삭제</button>
-        </form>
+      <h1>{{ post.title }}</h1>
+      <p class="article-meta">작성자 {{ post|display_author }} · 작성 {{ post.created_at|datetime }} · 조회 {{ post.view_count }}</p>
+      {% if post.status == "temporary" %}
+        <p class="temporary-note">좋아요 {{ temporary_like_threshold }}개 이상이면 정식글로 전환되고, 싫어요 {{ temporary_dislike_threshold }}개 이상이면 삭제됩니다.</p>
       {% endif %}
-    </div>
+      <div class="tags compact-tags">
+        {% for tag in post.tags %}
+          <a class="tag" href="/?q={{ tag.name }}">#{{ tag.name }}</a>
+        {% endfor %}
+      </div>
+      {% if can_manage %}
+        <div class="article-admin-actions">
+          <a href="/posts/{{ post.id }}/edit">수정</a>
+          <form action="/posts/{{ post.id }}/delete" method="post" class="inline" onsubmit="return confirm('정말 삭제하시겠어요?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+            <button type="submit" class="link-button danger-text">삭제</button>
+          </form>
+        </div>
+      {% endif %}
+    </header>
 
     <div class="content">{{ post.content | e | replace("\n","<br>") | safe }}</div>
 
-    <div class="actions">
-      <span class="metric">좋아요 {{ post.likes|length }}</span>
-      <span class="metric">댓글 {{ comments|length }}</span>
-      {% if user %}
-        <form action="/posts/{{ post.id }}/like" method="post" class="inline">
+    <div class="actions article-actions">
+      <form action="/posts/{{ post.id }}/like" method="post" class="inline">
+        {% if user %}
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-          <button type="submit">{{ "좋아요 취소" if user_liked else "좋아요" }}</button>
+        {% endif %}
+        <button type="submit" class="metric action-metric {{ 'active' if user_liked else '' }}">좋아요 {{ post|total_likes }}</button>
+      </form>
+
+      <form action="/posts/{{ post.id }}/dislike" method="post" class="inline">
+        {% if user %}
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+        {% endif %}
+        <button type="submit" class="metric action-metric dislike-metric {{ 'active' if user_disliked else '' }}">싫어요 {{ post|total_dislikes }}</button>
+      </form>
+
+      {% if user %}
+        <form action="/posts/{{ post.id }}/bookmark" method="post" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          <button type="submit" class="metric action-metric {{ 'active' if user_bookmarked else '' }}">저장 {{ post.bookmarks|length }}</button>
         </form>
       {% else %}
-        <a href="/login">로그인하고 좋아요</a>
+        <a class="metric action-metric" href="/login">저장 {{ post.bookmarks|length }}</a>
       {% endif %}
+
+      <a class="metric action-metric" href="#comments">댓글 {{ comments|length }}</a>
     </div>
+
+    {% if user %}
+      <form class="report-form" action="/posts/{{ post.id }}/report" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+        <input name="reason" placeholder="신고 사유" required />
+        <button type="submit" class="secondary-button">신고</button>
+      </form>
+    {% endif %}
   </article>
 
-  <section class="comment-panel">
-    <h2>댓글 {{ comments|length }}</h2>
+  <section class="comment-panel detail-comments" id="comments">
+    <div class="comment-head">
+      <h2>댓글 {{ comments|length }}</h2>
+    </div>
     {% if user %}
       <form method="post" action="/posts/{{ post.id }}/comments" class="comment-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
@@ -42,7 +83,7 @@
         <button type="submit">댓글 작성</button>
       </form>
     {% else %}
-      <p class="comment-login muted"><a href="/login">로그인</a>하면 댓글을 작성할 수 있습니다.</p>
+      <p class="comment-login muted"><a href="/login">로그인</a>하면 댓글을 작성할 수 있습니다. 댓글 목록은 로그인하지 않아도 볼 수 있습니다.</p>
     {% endif %}
 
     <ul class="comment-list">
@@ -50,11 +91,24 @@
         <li>
           <p>{{ comment.content }}</p>
           <div class="comment-meta">
+            <span>{{ comment.created_at|datetime }}</span>
             <span>{{ comment.user.nickname or comment.user.email }}</span>
-            {% if user and user.is_admin %}
-              <form action="/admin/comments/{{ comment.id }}/delete" method="post" class="inline">
+            {% if user and (user.is_admin or user.id == comment.user_id) %}
+              <form action="/comments/{{ comment.id }}/edit" method="post" class="inline-edit">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+                <input name="content" value="{{ comment.content }}" required />
+                <button type="submit" class="secondary-button">수정</button>
+              </form>
+              <form action="/comments/{{ comment.id }}/delete" method="post" class="inline" onsubmit="return confirm('댓글을 삭제할까요?');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
                 <button type="submit" class="link-button danger-text">삭제</button>
+              </form>
+            {% endif %}
+            {% if user %}
+              <form action="/comments/{{ comment.id }}/report" method="post" class="inline-report">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+                <input name="reason" placeholder="신고 사유" required />
+                <button type="submit" class="link-button">신고</button>
               </form>
             {% endif %}
           </div>
@@ -62,6 +116,36 @@
       {% endfor %}
       {% if comments|length == 0 %}
         <li class="empty-state">아직 댓글이 없습니다.</li>
+      {% endif %}
+    </ul>
+  </section>
+
+  <section class="feed related-panel">
+    <div class="section-title">
+      <h2>비슷한 꿀팁</h2>
+    </div>
+    <ul class="post-list">
+      {% for p in related_posts %}
+        {% set related_grade = p|reaction_grade %}
+        <li class="post-row related-row">
+          <a class="post-title" href="/posts/{{ p.id }}">{{ p.title }}</a>
+          <div class="badge-row">
+            <span class="status-badge reaction-badge {{ related_grade.class }}">{{ related_grade.label }}</span>
+            {% if p.status == "temporary" %}
+              <span class="status-badge status-temporary">임시글</span>
+            {% endif %}
+          </div>
+          <div class="post-meta">
+            <span>{{ p.created_at|datetime }}</span>
+            <span>조회 {{ p.view_count }}</span>
+            <span>좋아요 {{ p|total_likes }}</span>
+            <span>싫어요 {{ p|total_dislikes }}</span>
+            <span>{{ p|display_author }}</span>
+          </div>
+        </li>
+      {% endfor %}
+      {% if related_posts|length == 0 %}
+        <li class="empty-state">아직 비슷한 글이 없습니다.</li>
       {% endif %}
     </ul>
   </section>

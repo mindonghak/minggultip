@@ -1,12 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>로그인</h1>
-  {% if error %}<p class="error">{{ error }}</p>{% endif %}
-  <form method="post">
-    <label>이메일</label>
-    <input name="email" type="email" required />
-    <label>비밀번호</label>
-    <input name="password" type="password" required />
-    <button type="submit">로그인</button>
-  </form>
+  <section class="form-panel auth-panel">
+    <h1>로그인</h1>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+    <form method="post">
+      <label>이메일</label>
+      <input name="email" type="email" required />
+      <label>비밀번호</label>
+      <input name="password" type="password" required />
+      <div class="auth-actions">
+        <button type="submit">로그인</button>
+        <a class="secondary-action" href="/register">회원가입</a>
+      </div>
+    </form>
+  </section>
 {% endblock %}

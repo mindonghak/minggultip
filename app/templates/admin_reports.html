@@ -14,7 +14,7 @@
           <div class="post-meta">
             <span>{{ report.status }}</span>
             <span>{{ report.created_at|datetime }}</span>
-            <span>{{ report.user.nickname or report.user.email }}</span>
+            <span>{{ report.user.nickname or report.user.username or report.user.email }}</span>
             {% if report.post_id %}<a href="/posts/{{ report.post_id }}">게시글 보기</a>{% endif %}
           </div>
           {% if report.status == "open" %}

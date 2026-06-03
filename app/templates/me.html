@@ -3,7 +3,7 @@
   {% include "_discover.html" %}
 
   <section class="profile-panel">
-    <h1>{{ user.nickname or user.email }}</h1>
+    <h1>{{ user.nickname or user.username or user.email }}</h1>
     <p class="muted">{{ user.bio or "아직 소개가 없습니다." }}</p>
   </section>
 

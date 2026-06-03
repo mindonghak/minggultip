@@ -40,6 +40,7 @@ TEMP_POST_DISLIKE_THRESHOLD = 5
 TEMP_POST_REVIEW_DAYS = 7
 DEFAULT_CATEGORY_NAME = "일반"
 ANONYMOUS_WRITER_EMAIL = "anonymous@minggultip.local"
+LOCAL_EMAIL_DOMAIN = "local.minggultip.invalid"
 ANONYMOUS_NICKNAMES = [
     "생활꿀벌",
     "익명살림왕",
@@ -81,7 +82,7 @@ templates.env.filters["total_dislikes"] = total_dislikes
 def display_author(post: Post) -> str:
     if post.anonymous_author_name:
         return post.anonymous_author_name
-    return post.author.nickname or post.author.email
+    return post.author.nickname or post.author.username or post.author.email
 
 
 templates.env.filters["display_author"] = display_author
@@ -132,6 +133,14 @@ def render(request: Request, template_name: str, context: dict):
 
 def require_valid_csrf(user: User, csrf_token: str) -> bool:
     return bool(csrf_token and verify_csrf_token(csrf_token, user.id))
+
+
+def clean_username(value: str) -> str:
+    return value.strip().lower()
+
+
+def internal_email_for_username(username: str) -> str:
+    return f"{username}@{LOCAL_EMAIL_DOMAIN}"
 
 
 def utc_now() -> datetime:
@@ -355,17 +364,40 @@ def register_page(request: Request):
 @router.post("/register")
 def register(
     request: Request,
-    email: str = Form(...),
+    username: str = Form(...),
     password: str = Form(...),
-    nickname: str = Form(""),
+    nickname: str = Form(...),
+    recovery_email: str = Form(""),
     db: Session = Depends(get_db),
 ):
-    exists = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
-    if exists:
-        return render(request, "register.html", {"user": None, "error": "이미 사용 중인 이메일입니다."})
+    cleaned_username = clean_username(username)
+    display_name = nickname.strip()
+    cleaned_recovery_email = recovery_email.strip().lower() or None
+    if len(cleaned_username) < 3 or not cleaned_username.replace("_", "").replace("-", "").isalnum():
+        return render(request, "register.html", {"user": None, "error": "아이디는 영문, 숫자, -, _ 조합으로 3자 이상 입력해 주세요."})
+    if len(password) < 4:
+        return render(request, "register.html", {"user": None, "error": "비밀번호는 4자 이상 입력해 주세요."})
 
-    display_name = nickname.strip() or email.split("@")[0]
-    user = User(email=email, nickname=display_name, password_hash=hash_password(password))
+    username_exists = db.execute(select(User).where(User.username == cleaned_username)).scalar_one_or_none()
+    legacy_email_exists = db.execute(select(User).where(User.email == cleaned_username)).scalar_one_or_none()
+    if username_exists or legacy_email_exists:
+        return render(request, "register.html", {"user": None, "error": "이미 사용 중인 아이디입니다."})
+
+    if cleaned_recovery_email:
+        email_exists = db.execute(
+            select(User).where(or_(User.recovery_email == cleaned_recovery_email, User.email == cleaned_recovery_email))
+        ).scalar_one_or_none()
+        if email_exists:
+            return render(request, "register.html", {"user": None, "error": "이미 등록된 복구용 이메일입니다."})
+
+    user = User(
+        email=cleaned_recovery_email or internal_email_for_username(cleaned_username),
+        username=cleaned_username,
+        nickname=display_name,
+        recovery_email=cleaned_recovery_email,
+        email_verified=False,
+        password_hash=hash_password(password),
+    )
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -383,13 +415,16 @@ def login_page(request: Request):
 @router.post("/login")
 def login(
     request: Request,
-    email: str = Form(...),
+    username: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    user = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
+    identifier = clean_username(username)
+    user = db.execute(select(User).where(or_(User.username == identifier, User.email == identifier))).scalar_one_or_none()
     if not user or not verify_password(password, user.password_hash):
-        return render(request, "login.html", {"user": None, "error": "이메일 또는 비밀번호가 올바르지 않습니다."})
+        return render(request, "login.html", {"user": None, "error": "아이디 또는 비밀번호가 올바르지 않습니다."})
+    if user.is_suspended:
+        return render(request, "login.html", {"user": None, "error": "정지된 계정입니다."})
 
     resp = RedirectResponse(url="/", status_code=303)
     resp.set_cookie("session", create_session(user.id), httponly=True, samesite="lax")

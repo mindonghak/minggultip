@@ -34,10 +34,14 @@ def init_db():
 
     user_columns = {column["name"] for column in inspector.get_columns("users")}
     user_required_columns = {
+        "username": "VARCHAR(50)",
         "nickname": "VARCHAR(50)",
+        "recovery_email": "VARCHAR(255)",
+        "email_verified": "BOOLEAN DEFAULT 0",
         "profile_image": "VARCHAR(500)",
         "bio": "TEXT",
         "is_admin": "BOOLEAN DEFAULT 0",
+        "is_suspended": "BOOLEAN DEFAULT 0",
     }
     post_columns = {column["name"] for column in inspector.get_columns("posts")} if "posts" in inspector.get_table_names() else set()
     post_required_columns = {

@@ -18,7 +18,7 @@
           <p>{{ inquiry.message }}</p>
           <div class="post-meta">
             <span>{{ inquiry.created_at|datetime }}</span>
-            <span>{{ inquiry.user.nickname or inquiry.user.email }}</span>
+            <span>{{ inquiry.user.nickname or inquiry.user.username or inquiry.user.email }}</span>
           </div>
 
           <form action="/admin/inquiries/{{ inquiry.id }}/update" method="post" class="admin-response-form">

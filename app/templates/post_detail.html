@@ -92,7 +92,7 @@
           <p>{{ comment.content }}</p>
           <div class="comment-meta">
             <span>{{ comment.created_at|datetime }}</span>
-            <span>{{ comment.user.nickname or comment.user.email }}</span>
+            <span>{{ comment.user.nickname or comment.user.username or comment.user.email }}</span>
             {% if user and (user.is_admin or user.id == comment.user_id) %}
               <form action="/comments/{{ comment.id }}/edit" method="post" class="inline-edit">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />

@@ -20,7 +20,7 @@
           <a href="/admin/reports">신고함</a>
           <a href="/admin/inquiries">문의함</a>
         {% endif %}
-        <span class="user-chip">{{ user.nickname or user.email }}</span>
+        <span class="user-chip">{{ user.nickname or user.username or user.email }}</span>
         <a class="primary-link" href="/posts/new">글쓰기</a>
         <form action="/logout" method="post" class="inline">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />

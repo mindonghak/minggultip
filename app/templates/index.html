@@ -52,6 +52,11 @@
   {% endif %}
 
   <section class="feed-shell">
+    <div class="feed-summary">
+      <span>{{ "전체" if not q else q }} 글 {{ total_posts }}개</span>
+      <span>{{ recent_page if active_tab == "recent" else popular_page }} / {{ total_pages }}페이지</span>
+    </div>
+
     <div class="feed-tabs" aria-label="글 정렬">
       <a class="{{ 'active' if active_tab == 'recent' else '' }}" href="/?q={{ q|urlencode }}&tab=recent">최신글</a>
       <a class="{{ 'active' if active_tab == 'popular' else '' }}" href="/?q={{ q|urlencode }}&tab=popular">인기글</a>
@@ -61,7 +66,7 @@
     <div class="feed" id="recent">
       <div class="section-title">
         <h2>최신글</h2>
-        <span class="muted">{{ recent_posts|length }}개</span>
+        <span class="muted">{{ total_posts }}개</span>
       </div>
       <ul class="post-list">
         {% for p in recent_posts %}
@@ -78,7 +83,7 @@
     <div class="feed" id="popular">
       <div class="section-title">
         <h2>인기글</h2>
-        <span class="muted">{{ popular_posts|length }}개</span>
+        <span class="muted">{{ total_posts }}개</span>
       </div>
       <ul class="post-list">
         {% for p in popular_posts %}

@@ -344,6 +344,14 @@ def paginated_posts(db: Session, stmt, page: int, per_page: int = PER_PAGE):
     return items[:per_page], len(items) > per_page, page
 
 
+def post_count(db: Session, query: str) -> int:
+    stmt = select(func.count(Post.id))
+    condition = search_filter(query)
+    if condition is not None:
+        stmt = stmt.where(condition)
+    return int(db.execute(stmt).scalar_one() or 0)
+
+
 @router.get("/")
 def index(
     request: Request,
@@ -364,6 +372,8 @@ def index(
 
     recent_posts, recent_has_next, recent_page = paginated_posts(db, recent_stmt, recent_page)
     popular_posts, popular_has_next, popular_page = paginated_posts(db, popular_query(db, query), popular_page)
+    total_posts = post_count(db, query)
+    total_pages = max((total_posts + PER_PAGE - 1) // PER_PAGE, 1)
 
     return render(request, "index.html", {
         "user": user,
@@ -375,6 +385,8 @@ def index(
         "popular_has_next": popular_has_next,
         "q": query,
         "active_tab": active_tab,
+        "total_posts": total_posts,
+        "total_pages": total_pages,
         "page_title": "민꿀팁 - 생활 꿀팁 공유 커뮤니티",
         "page_description": "절약, 정리, 교통, 생활 정보까지 오늘 바로 써먹을 수 있는 꿀팁을 모아보세요.",
         **categories_and_tags(db),

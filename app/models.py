@@ -42,6 +42,7 @@ class Post(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(200))
     content: Mapped[str] = mapped_column(Text)
+    image_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     view_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     status: Mapped[str] = mapped_column(String(20), default="published", server_default="published")
     source: Mapped[str] = mapped_column(String(20), default="user", server_default="user")

@@ -25,6 +25,9 @@
       <input name="title" value="{{ post.title if post else '' }}" required />
       <label>태그</label>
       <input name="tags" value="{{ tag_text }}" placeholder="예: 절약 청소 자취" />
+      <label>이미지 URL</label>
+      <input name="image_url" value="{{ post.image_url if post and post.image_url else '' }}" placeholder="https://example.com/image.jpg" inputmode="url" />
+      <p class="form-help">선택사항입니다. 이미지 파일 주소를 넣으면 게시글에 사진이 표시됩니다.</p>
       <label>내용</label>
       <textarea name="content" rows="12" required>{{ post.content if post else '' }}</textarea>
       <div class="form-actions">

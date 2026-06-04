@@ -46,6 +46,7 @@ def init_db():
     }
     post_columns = {column["name"] for column in inspector.get_columns("posts")} if "posts" in inspector.get_table_names() else set()
     post_required_columns = {
+        "image_url": "VARCHAR(1000)",
         "view_count": "INTEGER DEFAULT 0",
         "status": "VARCHAR(20) DEFAULT 'published'",
         "source": "VARCHAR(20) DEFAULT 'user'",

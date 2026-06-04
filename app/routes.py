@@ -146,6 +146,15 @@ def internal_email_for_username(username: str) -> str:
     return f"{username}@{LOCAL_EMAIL_DOMAIN}"
 
 
+def clean_image_url(value: str) -> str | None:
+    url = value.strip()
+    if not url:
+        return None
+    if not url.startswith(("http://", "https://")):
+        return None
+    return url[:1000]
+
+
 def utc_now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
@@ -531,6 +540,7 @@ def new_post(
     request: Request,
     title: str = Form(...),
     content: str = Form(...),
+    image_url: str = Form(""),
     tags: str = Form(""),
     csrf_token: str = Form(""),
     db: Session = Depends(get_db),
@@ -558,6 +568,7 @@ def new_post(
     post = Post(
         title=title.strip(),
         content=content.strip(),
+        image_url=clean_image_url(image_url),
         author_id=author_id,
         category_id=cat.id,
         anonymous_author_name=anonymous_author_name,
@@ -599,6 +610,7 @@ def edit_post(
     post_id: int,
     title: str = Form(...),
     content: str = Form(...),
+    image_url: str = Form(""),
     tags: str = Form(""),
     csrf_token: str = Form(""),
     db: Session = Depends(get_db),
@@ -612,6 +624,7 @@ def edit_post(
 
     post.title = title.strip()
     post.content = content.strip()
+    post.image_url = clean_image_url(image_url)
     sync_post_tags(db, post, tags)
     db.commit()
     return RedirectResponse(f"/posts/{post.id}", status_code=303)
@@ -674,6 +687,7 @@ def post_detail(request: Request, post_id: int, db: Session = Depends(get_db)):
         "temporary_dislike_threshold": TEMP_POST_DISLIKE_THRESHOLD,
         "page_title": f"{post.title} - 민꿀팁",
         "page_description": post.content.replace("\n", " ")[:140],
+        "page_image_url": post.image_url,
         **categories_and_tags(db),
     })
 

@@ -34,6 +34,12 @@
       {% endif %}
     </header>
 
+    {% if post.image_url %}
+      <figure class="article-image">
+        <img src="{{ post.image_url }}" alt="{{ post.title }}" referrerpolicy="no-referrer" />
+      </figure>
+    {% endif %}
+
     <div class="content article-content">
       {% for paragraph in post.content.split("\n\n") %}
         {% if paragraph.strip() %}

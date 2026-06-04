@@ -3,6 +3,9 @@
   {% set grade = p|reaction_grade %}
   <li class="post-row">
     <a class="post-summary" href="/posts/{{ p.id }}">
+      {% if p.image_url %}
+        <img class="post-thumb" src="{{ p.image_url }}" alt="" loading="lazy" referrerpolicy="no-referrer" />
+      {% endif %}
       <span class="post-title">{{ p.title }}</span>
       <span class="badge-row">
         <span class="status-badge reaction-badge {{ grade.class }}">{{ grade.label }}</span>

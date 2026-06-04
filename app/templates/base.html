@@ -11,6 +11,9 @@
   <meta property="og:description" content="{{ page_description }}" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="{{ canonical_url }}" />
+  {% if page_image_url %}
+    <meta property="og:image" content="{{ page_image_url }}" />
+  {% endif %}
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>

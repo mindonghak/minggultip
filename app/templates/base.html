@@ -29,6 +29,7 @@
         {% if user.is_admin %}
           <a href="/admin/reports">신고함</a>
           <a href="/admin/inquiries">문의함</a>
+          <a href="/admin/deleted-posts">삭제글</a>
         {% endif %}
         <span class="user-chip">{{ user.nickname or user.username or user.email }}</span>
         <a class="primary-link" href="/posts/new">글쓰기</a>

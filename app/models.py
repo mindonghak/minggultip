@@ -190,6 +190,27 @@ class PostTag(Base):
     )
 
 
+class DeletedPost(Base):
+    __tablename__ = "deleted_posts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_post_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)
+    title: Mapped[str] = mapped_column(String(200))
+    content: Mapped[str] = mapped_column(Text)
+    image_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    source: Mapped[str] = mapped_column(String(20), default="user", server_default="user")
+    status: Mapped[str] = mapped_column(String(20), default="deleted", server_default="deleted")
+    author_label: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    category_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    tag_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    like_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    dislike_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    delete_reason: Mapped[str] = mapped_column(String(255))
+    deleted_at: Mapped[str] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    restored_at: Mapped[str | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    restored_post_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
 class Report(Base):
     __tablename__ = "reports"
 

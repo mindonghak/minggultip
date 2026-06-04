@@ -88,6 +88,7 @@ a:hover { text-decoration:underline; }
 .section-title { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:0; padding:16px 18px; border-bottom:1px solid var(--soft-line); }
 .section-title h1, .section-title h2, .section-title h3 { margin:0; }
 .section-title h2 { font-size:1.12rem; }
+.compact-heading { margin:0 0 8px; font-size:1.08rem; line-height:1.35; }
 .muted { color:var(--muted); font-size:0.95em; }
 
 .post-list, .comment-list, .list { list-style:none; padding-left:0; margin:0; }

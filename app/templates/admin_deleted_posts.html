@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+  {% include "_discover.html" %}
+
+  <section class="feed">
+    <div class="section-title">
+      <h1>삭제글</h1>
+      <span class="muted">{{ deleted_posts|length }}건</span>
+    </div>
+    <ul class="comment-list">
+      {% for deleted_post in deleted_posts %}
+        <li>
+          <h2 class="compact-heading">{{ deleted_post.title }}</h2>
+          <p>{{ deleted_post.content[:220] }}{% if deleted_post.content|length > 220 %}...{% endif %}</p>
+          <div class="post-meta">
+            <span>{{ deleted_post.delete_reason }}</span>
+            <span>{{ deleted_post.deleted_at|datetime }}</span>
+            <span>{{ deleted_post.author_label or "알 수 없음" }}</span>
+            <span>좋아요 {{ deleted_post.like_count }}</span>
+            <span>싫어요 {{ deleted_post.dislike_count }}</span>
+            {% if deleted_post.category_name %}<span>{{ deleted_post.category_name }}</span>{% endif %}
+          </div>
+          {% if deleted_post.tag_text %}
+            <div class="tags compact-tags">
+              {% for tag in deleted_post.tag_text.split() %}
+                <span class="tag">#{{ tag }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% if deleted_post.restored_post_id %}
+            <p class="muted">복구됨: <a href="/posts/{{ deleted_post.restored_post_id }}">게시글 보기</a></p>
+          {% else %}
+            <form action="/admin/deleted-posts/{{ deleted_post.id }}/restore" method="post" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+              <button type="submit" class="secondary-button">복구</button>
+            </form>
+          {% endif %}
+        </li>
+      {% endfor %}
+      {% if deleted_posts|length == 0 %}
+        <li class="empty-state">삭제된 글이 없습니다.</li>
+      {% endif %}
+    </ul>
+  </section>
+{% endblock %}

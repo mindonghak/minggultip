@@ -14,6 +14,7 @@ from .models import (
     Bookmark,
     Category,
     Comment,
+    DeletedPost,
     Dislike,
     Inquiry,
     Like,
@@ -204,17 +205,42 @@ def post_dislike_count(db: Session, post_id: int) -> int:
     return int(user_dislikes or 0) + int(anon_dislikes or 0)
 
 
+def archive_post_before_delete(db: Session, post: Post, reason: str) -> DeletedPost:
+    archived = DeletedPost(
+        original_post_id=post.id,
+        title=post.title,
+        content=post.content,
+        image_url=post.image_url,
+        source=post.source,
+        status=post.status,
+        author_label=display_author(post),
+        category_name=post.category.name if post.category else None,
+        tag_text=post_tag_text(post),
+        like_count=post_like_count(db, post.id),
+        dislike_count=post_dislike_count(db, post.id),
+        delete_reason=reason[:255],
+    )
+    db.add(archived)
+    db.flush()
+    return archived
+
+
+def delete_post_with_archive(db: Session, post: Post, reason: str):
+    archive_post_before_delete(db, post, reason)
+    db.delete(post)
+
+
 def moderate_post(db: Session, post: Post) -> bool:
     likes = post_like_count(db, post.id)
     dislikes = post_dislike_count(db, post.id)
     if post.source == "editorial" and dislikes >= EDITORIAL_POST_DISLIKE_THRESHOLD:
-        db.delete(post)
+        delete_post_with_archive(db, post, "editorial_dislike_threshold")
         db.commit()
         return False
     if post.status != "temporary":
         return True
     if dislikes >= TEMP_POST_DISLIKE_THRESHOLD:
-        db.delete(post)
+        delete_post_with_archive(db, post, "temporary_dislike_threshold")
         db.commit()
         return False
     if likes >= TEMP_POST_LIKE_THRESHOLD:
@@ -223,7 +249,7 @@ def moderate_post(db: Session, post: Post) -> bool:
         db.commit()
         return True
     if post.promotion_deadline and post.promotion_deadline <= utc_now():
-        db.delete(post)
+        delete_post_with_archive(db, post, "temporary_deadline_expired")
         db.commit()
         return False
     return True
@@ -236,17 +262,17 @@ def moderate_posts(db: Session):
         likes = post_like_count(db, post.id)
         dislikes = post_dislike_count(db, post.id)
         if post.source == "editorial" and dislikes >= EDITORIAL_POST_DISLIKE_THRESHOLD:
-            db.delete(post)
+            delete_post_with_archive(db, post, "editorial_dislike_threshold")
             changed = True
         elif post.status == "temporary" and dislikes >= TEMP_POST_DISLIKE_THRESHOLD:
-            db.delete(post)
+            delete_post_with_archive(db, post, "temporary_dislike_threshold")
             changed = True
         elif post.status == "temporary" and likes >= TEMP_POST_LIKE_THRESHOLD:
             post.status = "published"
             post.promotion_deadline = None
             changed = True
         elif post.status == "temporary" and post.promotion_deadline and post.promotion_deadline <= utc_now():
-            db.delete(post)
+            delete_post_with_archive(db, post, "temporary_deadline_expired")
             changed = True
     if changed:
         db.commit()
@@ -660,7 +686,8 @@ def delete_post(request: Request, post_id: int, csrf_token: str = Form(""), db: 
     if not post:
         return RedirectResponse("/", status_code=303)
     if can_manage_post(user, post) and require_valid_csrf(user, csrf_token):
-        db.delete(post)
+        reason = "admin_deleted" if user and user.is_admin and user.id != post.author_id else "author_deleted"
+        delete_post_with_archive(db, post, reason)
         db.commit()
         return RedirectResponse("/", status_code=303)
     return RedirectResponse(f"/posts/{post.id}", status_code=303)
@@ -891,6 +918,54 @@ def admin_inquiries(request: Request, db: Session = Depends(get_db)):
         "q": "",
         **categories_and_tags(db),
     })
+
+
+@router.get("/admin/deleted-posts")
+def admin_deleted_posts(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user or not user.is_admin:
+        return RedirectResponse("/", status_code=303)
+    deleted_posts = db.execute(select(DeletedPost).order_by(desc(DeletedPost.deleted_at)).limit(100)).scalars().all()
+    return render(request, "admin_deleted_posts.html", {
+        "user": user,
+        "deleted_posts": deleted_posts,
+        "q": "",
+        **categories_and_tags(db),
+    })
+
+
+@router.post("/admin/deleted-posts/{deleted_post_id}/restore")
+def restore_deleted_post(request: Request, deleted_post_id: int, csrf_token: str = Form(""), db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    deleted_post = db.get(DeletedPost, deleted_post_id)
+    if not user or not user.is_admin or not deleted_post or not require_valid_csrf(user, csrf_token):
+        return RedirectResponse("/admin/deleted-posts", status_code=303)
+    if deleted_post.restored_post_id:
+        return RedirectResponse(f"/posts/{deleted_post.restored_post_id}", status_code=303)
+
+    category = db.execute(select(Category).where(Category.name == (deleted_post.category_name or DEFAULT_CATEGORY_NAME))).scalar_one_or_none()
+    if not category:
+        category = Category(name=deleted_post.category_name or DEFAULT_CATEGORY_NAME)
+        db.add(category)
+        db.flush()
+
+    author = get_anonymous_writer(db)
+    post = Post(
+        title=deleted_post.title,
+        content=deleted_post.content,
+        image_url=deleted_post.image_url,
+        source=deleted_post.source,
+        status="published",
+        author_id=author.id,
+        category_id=category.id,
+    )
+    db.add(post)
+    db.flush()
+    sync_post_tags(db, post, deleted_post.tag_text or "")
+    deleted_post.restored_post_id = post.id
+    deleted_post.restored_at = utc_now()
+    db.commit()
+    return RedirectResponse(f"/posts/{post.id}", status_code=303)
 
 
 @router.post("/admin/inquiries/{inquiry_id}/update")

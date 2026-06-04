@@ -53,8 +53,35 @@
 
   <section class="feed-shell">
     <div class="feed-summary">
-      <span>{{ "전체" if not q else q }} 글 {{ total_posts }}개</span>
-      <span>{{ recent_page if active_tab == "recent" else popular_page }} / {{ total_pages }}페이지</span>
+      <div class="feed-summary-text">
+        <strong>{{ "전체" if not q else q }} 글 {{ total_posts }}개</strong>
+        <span>{{ recent_page if active_tab == "recent" else popular_page }} / {{ total_pages }}페이지</span>
+      </div>
+      <div class="feed-summary-actions">
+        {% if active_tab == "recent" %}
+          {% if recent_page > 1 %}
+            <a href="/?q={{ q|urlencode }}&tab=recent&recent_page={{ recent_page - 1 }}">이전</a>
+          {% else %}
+            <span class="disabled">이전</span>
+          {% endif %}
+          {% if recent_has_next %}
+            <a href="/?q={{ q|urlencode }}&tab=recent&recent_page={{ recent_page + 1 }}">다음</a>
+          {% else %}
+            <span class="disabled">다음</span>
+          {% endif %}
+        {% else %}
+          {% if popular_page > 1 %}
+            <a href="/?q={{ q|urlencode }}&tab=popular&popular_page={{ popular_page - 1 }}">이전</a>
+          {% else %}
+            <span class="disabled">이전</span>
+          {% endif %}
+          {% if popular_has_next %}
+            <a href="/?q={{ q|urlencode }}&tab=popular&popular_page={{ popular_page + 1 }}">다음</a>
+          {% else %}
+            <span class="disabled">다음</span>
+          {% endif %}
+        {% endif %}
+      </div>
     </div>
 
     <div class="feed-tabs" aria-label="글 정렬">

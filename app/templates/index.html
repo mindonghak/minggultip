@@ -60,6 +60,11 @@
       <div class="feed-summary-actions">
         {% if active_tab == "recent" %}
           {% if recent_page > 1 %}
+            <a href="/?q={{ q|urlencode }}&tab=recent&recent_page=1">처음</a>
+          {% else %}
+            <span class="disabled">처음</span>
+          {% endif %}
+          {% if recent_page > 1 %}
             <a href="/?q={{ q|urlencode }}&tab=recent&recent_page={{ recent_page - 1 }}">이전</a>
           {% else %}
             <span class="disabled">이전</span>
@@ -69,7 +74,17 @@
           {% else %}
             <span class="disabled">다음</span>
           {% endif %}
+          {% if recent_page < total_pages %}
+            <a href="/?q={{ q|urlencode }}&tab=recent&recent_page={{ total_pages }}">마지막</a>
+          {% else %}
+            <span class="disabled">마지막</span>
+          {% endif %}
         {% else %}
+          {% if popular_page > 1 %}
+            <a href="/?q={{ q|urlencode }}&tab=popular&popular_page=1">처음</a>
+          {% else %}
+            <span class="disabled">처음</span>
+          {% endif %}
           {% if popular_page > 1 %}
             <a href="/?q={{ q|urlencode }}&tab=popular&popular_page={{ popular_page - 1 }}">이전</a>
           {% else %}
@@ -79,6 +94,11 @@
             <a href="/?q={{ q|urlencode }}&tab=popular&popular_page={{ popular_page + 1 }}">다음</a>
           {% else %}
             <span class="disabled">다음</span>
+          {% endif %}
+          {% if popular_page < total_pages %}
+            <a href="/?q={{ q|urlencode }}&tab=popular&popular_page={{ total_pages }}">마지막</a>
+          {% else %}
+            <span class="disabled">마지막</span>
           {% endif %}
         {% endif %}
       </div>

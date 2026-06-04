@@ -37,6 +37,7 @@ templates = Jinja2Templates(directory="app/templates")
 PER_PAGE = 5
 TEMP_POST_LIKE_THRESHOLD = 5
 TEMP_POST_DISLIKE_THRESHOLD = 5
+EDITORIAL_POST_DISLIKE_THRESHOLD = 3
 TEMP_POST_REVIEW_DAYS = 7
 DEFAULT_CATEGORY_NAME = "일반"
 ANONYMOUS_WRITER_EMAIL = "anonymous@minggultip.local"
@@ -203,11 +204,15 @@ def post_dislike_count(db: Session, post_id: int) -> int:
     return int(user_dislikes or 0) + int(anon_dislikes or 0)
 
 
-def moderate_temporary_post(db: Session, post: Post) -> bool:
-    if post.status != "temporary":
-        return True
+def moderate_post(db: Session, post: Post) -> bool:
     likes = post_like_count(db, post.id)
     dislikes = post_dislike_count(db, post.id)
+    if post.source == "editorial" and dislikes >= EDITORIAL_POST_DISLIKE_THRESHOLD:
+        db.delete(post)
+        db.commit()
+        return False
+    if post.status != "temporary":
+        return True
     if dislikes >= TEMP_POST_DISLIKE_THRESHOLD:
         db.delete(post)
         db.commit()
@@ -224,20 +229,23 @@ def moderate_temporary_post(db: Session, post: Post) -> bool:
     return True
 
 
-def moderate_temporary_posts(db: Session):
-    posts = db.execute(select(Post).where(Post.status == "temporary")).scalars().all()
+def moderate_posts(db: Session):
+    posts = db.execute(select(Post).where(or_(Post.status == "temporary", Post.source == "editorial"))).scalars().all()
     changed = False
     for post in posts:
         likes = post_like_count(db, post.id)
         dislikes = post_dislike_count(db, post.id)
-        if dislikes >= TEMP_POST_DISLIKE_THRESHOLD:
+        if post.source == "editorial" and dislikes >= EDITORIAL_POST_DISLIKE_THRESHOLD:
             db.delete(post)
             changed = True
-        elif likes >= TEMP_POST_LIKE_THRESHOLD:
+        elif post.status == "temporary" and dislikes >= TEMP_POST_DISLIKE_THRESHOLD:
+            db.delete(post)
+            changed = True
+        elif post.status == "temporary" and likes >= TEMP_POST_LIKE_THRESHOLD:
             post.status = "published"
             post.promotion_deadline = None
             changed = True
-        elif post.promotion_deadline and post.promotion_deadline <= utc_now():
+        elif post.status == "temporary" and post.promotion_deadline and post.promotion_deadline <= utc_now():
             db.delete(post)
             changed = True
     if changed:
@@ -346,7 +354,7 @@ def index(
     db: Session = Depends(get_db),
 ):
     user = get_current_user(request, db)
-    moderate_temporary_posts(db)
+    moderate_posts(db)
     query = q.strip()
     active_tab = tab if tab in {"recent", "popular"} else "recent"
     recent_stmt = select(Post).order_by(desc(Post.created_at))
@@ -592,7 +600,7 @@ def edit_post_page(request: Request, post_id: int, db: Session = Depends(get_db)
     post = db.get(Post, post_id)
     if not post:
         return RedirectResponse("/", status_code=303)
-    if not moderate_temporary_post(db, post):
+    if not moderate_post(db, post):
         return RedirectResponse("/", status_code=303)
     if not can_manage_post(user, post):
         return RedirectResponse(f"/posts/{post.id}", status_code=303)
@@ -651,6 +659,8 @@ def post_detail(request: Request, post_id: int, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     post = db.get(Post, post_id)
     if not post:
+        return RedirectResponse("/", status_code=303)
+    if not moderate_post(db, post):
         return RedirectResponse("/", status_code=303)
 
     post.view_count += 1
@@ -765,7 +775,7 @@ def toggle_like(request: Request, post_id: int, csrf_token: str = Form(""), db: 
             db.add(AnonymousLike(post_id=post.id, anon_key=anon_key))
         resp.set_cookie("anon_like_id", anon_key, httponly=True, samesite="lax", max_age=60 * 60 * 24 * 365)
     db.commit()
-    if not moderate_temporary_post(db, post):
+    if not moderate_post(db, post):
         return RedirectResponse("/", status_code=303)
     return resp
 
@@ -801,7 +811,7 @@ def toggle_dislike(request: Request, post_id: int, csrf_token: str = Form(""), d
             db.add(AnonymousDislike(post_id=post.id, anon_key=anon_key))
         resp.set_cookie("anon_like_id", anon_key, httponly=True, samesite="lax", max_age=60 * 60 * 24 * 365)
     db.commit()
-    if not moderate_temporary_post(db, post):
+    if not moderate_post(db, post):
         return RedirectResponse("/", status_code=303)
     return resp
 

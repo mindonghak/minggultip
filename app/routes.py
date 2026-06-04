@@ -340,6 +340,7 @@ def paginated_posts(db: Session, stmt, page: int, per_page: int = PER_PAGE):
 def index(
     request: Request,
     q: str = "",
+    tab: str = "recent",
     recent_page: int = 1,
     popular_page: int = 1,
     db: Session = Depends(get_db),
@@ -347,6 +348,7 @@ def index(
     user = get_current_user(request, db)
     moderate_temporary_posts(db)
     query = q.strip()
+    active_tab = tab if tab in {"recent", "popular"} else "recent"
     recent_stmt = select(Post).order_by(desc(Post.created_at))
     condition = search_filter(query)
     if condition is not None:
@@ -364,6 +366,7 @@ def index(
         "recent_has_next": recent_has_next,
         "popular_has_next": popular_has_next,
         "q": query,
+        "active_tab": active_tab,
         "page_title": "민꿀팁 - 생활 꿀팁 공유 커뮤니티",
         "page_description": "절약, 정리, 교통, 생활 정보까지 오늘 바로 써먹을 수 있는 꿀팁을 모아보세요.",
         **categories_and_tags(db),

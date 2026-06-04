@@ -71,6 +71,13 @@ a:hover { text-decoration:underline; }
 .related-row { background:#fff; }
 .feed-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px; align-items:start; }
 .feed-grid .feed { margin:0; }
+.feed-shell { margin-top:14px; }
+.feed-shell .feed { margin:0; }
+.feed-tabs { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; padding:4px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+.feed-tabs a { display:flex; align-items:center; justify-content:center; min-height:42px; border-radius:7px; color:#4b5563; font-weight:750; text-decoration:none; }
+.feed-tabs a:hover { color:var(--brand-dark); background:#f0fdf4; text-decoration:none; }
+.feed-tabs a.active { background:var(--text); color:#fff; }
+.feed-tabs a.active:hover { background:var(--text); color:#fff; }
 .section-title { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:0; padding:16px 18px; border-bottom:1px solid var(--soft-line); }
 .section-title h1, .section-title h2, .section-title h3 { margin:0; }
 .section-title h2 { font-size:1.12rem; }

@@ -24,6 +24,7 @@ def healthz():
 def robots_txt():
     body = "\n".join([
         "User-agent: *",
+        "Disallow:",
         "Allow: /",
         f"Sitemap: {SITE_URL}/sitemap.xml",
         "",
